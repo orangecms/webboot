@@ -34,11 +34,16 @@ import (
 )
 
 const (
-	wbtcURL = "http://github.com/u-root/webboot-distro/raw/master/iso/tinycore/10.x/x86_64/release/webboot.iso"
-	tcURL   = "http://tinycorelinux.net/10.x/x86_64/release/TinyCorePure64-10.1.iso"
-	coreURL = "http://tinycorelinux.net/10.x/x86/release/CorePlus-current.iso"
-	ubuURL  = "http://releases.ubuntu.com/18.04/ubuntu-18.04.3-desktop-amd64.iso"
-	archURL = "https://mirror.rackspace.com/archlinux/iso/2020.01.01/archlinux-2020.01.01-x86_64.iso"
+//	wbtcURL = "http://github.com/u-root/webboot-distro/raw/master/iso/tinycore/10.x/x86_64/release/webboot.iso"
+//	tcURL   = "http://tinycorelinux.net/10.x/x86_64/release/TinyCorePure64-10.1.iso"
+//	coreURL = "http://tinycorelinux.net/10.x/x86/release/CorePlus-current.iso"
+//	ubuURL  = "http://releases.ubuntu.com/18.04/ubuntu-18.04.3-desktop-amd64.iso"
+//	archURL = "https://mirror.rackspace.com/archlinux/iso/2020.01.01/archlinux-2020.01.01-x86_64.iso"
+	wbtcURL = "http://10.0.2.2:8080/webboot.iso"
+	tcURL = "http://10.0.2.2:8080/TinyCorePure64-10.1.iso";
+  coreURL = "http://10.0.2.2:8080/CorePlus-current.iso"
+	ubuURL = "http://10.0.2.2:8080/ubuntu-18.04.3-desktop-amd64.iso";
+	archURL = "http://10.0.2.2:8080/archlinux-2020.01.01-x86_64.iso"
 )
 
 var (
@@ -52,6 +57,7 @@ var (
 	dryrun   = flag.Bool("dryrun", false, "Do not do the kexec")
 	wifi     = flag.String("wifi", "", "[essid [WPA [password]]]")
 	bookmark = map[string]*webboot.Distro{
+		// TODO: Get TinyCore to include pmem instead of using our customized kernel
 		// TODO: Fix webboot to process the tinycore's kernel and initrd to boot from instead of using our customized kernel
 		"webboot-tinycore": &webboot.Distro{
 			"boot/vmlinuz64",
