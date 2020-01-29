@@ -8,6 +8,7 @@ export KERNEL=$1
 export INITRD=$2
 
 qemu-system-x86_64 \
+  -machine q35 \
   -m $RAM_SIZE \
   -object rng-random,filename=/dev/urandom,id=rng0 \
   -device virtio-rng-pci,rng=rng0 \
