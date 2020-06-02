@@ -18,6 +18,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"io"
@@ -38,15 +39,21 @@ import (
 )
 
 const (
-	wbtcpURL  = "https://github.com/u-root/webboot-distro/raw/master/iso/tinycore/10.x/x86_64/release/TinyCorePure64.iso"
-	wbcpURL   = "https://github.com/u-root/webboot-distro/raw/master/iso/tinycore/10.x/x86_64/release/CorePure64.iso"
-	tcURL     = "http://tinycorelinux.net/10.x/x86_64/release/TinyCorePure64-10.1.iso"
-	coreURL   = "http://tinycorelinux.net/10.x/x86/release/CorePlus-current.iso"
-	ubuURL    = "http://releases.ubuntu.com/18.04/ubuntu-18.04.3-desktop-amd64.iso"
-	archURL   = "http://mirror.rackspace.com/archlinux/iso/2020.05.01/archlinux-2020.05.01-x86_64.iso"
-	fedoraURL = "https://download.fedoraproject.org/pub/fedora/linux/releases/32/Spins/x86_64/iso/Fedora-KDE-Live-x86_64-32-1.6.iso"
-	oSUSEURL  = "https://download.opensuse.org/distribution/leap/15.2/live/openSUSE-Leap-15.2-KDE-Live-x86_64-Media.iso"
-	tcCmdLine = "cde"
+	wbtcpURL    = "https://github.com/u-root/webboot-distro/raw/master/iso/tinycore/10.x/x86_64/release/TinyCorePure64.iso"
+	wbcpURL     = "https://github.com/u-root/webboot-distro/raw/master/iso/tinycore/10.x/x86_64/release/CorePure64.iso"
+	tcURL       = "http://tinycorelinux.net/10.x/x86_64/release/TinyCorePure64-10.1.iso"
+	coreURL     = "http://tinycorelinux.net/10.x/x86/release/CorePlus-current.iso"
+	ubuURL      = "http://releases.ubuntu.com/18.04/ubuntu-18.04.3-desktop-amd64.iso"
+	fedoraURL   = "https://download.fedoraproject.org/pub/fedora/linux/releases/32/Spins/x86_64/iso/Fedora-KDE-Live-x86_64-32-1.6.iso"
+	oSUSEURL    = "http://orangetux:8080/openSUSE-Leap-15.2-KDE-Live-x86_64-Build31.2-Media.iso"
+	archURL     = "http://10.0.2.2:8080/archlinux.iso"
+	srcdURL     = "http://10.0.2.2:8080/systemrescuecd.iso"
+	manjURL     = "http://10.0.2.2:8080/manjaro.iso"
+	debURL      = "http://10.0.2.2:8080/debian.iso"
+	tcCmdLine   = "cde"
+	slitazURL   = "http://10.0.2.2:8080/slitaz-rolling-core-5in1.iso"
+	slitaz64URL = "http://10.0.2.2:8080/slitaz-rolling-core64.iso"
+	// slitazURL = "http://mirror.slitaz.org/iso/rolling/slitaz-rolling-core64.iso"
 )
 
 //Distro defines an operating system distribution
@@ -93,18 +100,51 @@ var (
 			tcCmdLine,
 			tcURL,
 		},
+		"slitaz": &Distro{
+			"boot/bzImage64",
+			"boot/rootfs5.gz,boot/rootfs4.gz,boot/rootfs3.gz,boot/rootfs2.gz,boot/rootfs1.gz",
+			// "boot/rootfs1.gz64",
+			// "video=-32 autologin",
+			// "rw root=0x100 autologin initrd=/boot/rootfs5.gz initrd=/boot/rootfs4.gz initrd=/boot/rootfs3.gz initrd=/boot/rootfs2.gz initrd=/boot/rootfs1.gz64",
+			"rw root=0x100 autologin initrd=/boot/rootfs5.gz,/boot/rootfs4.gz,/boot/rootfs3.gz,/boot/rootfs2.gz,/boot/rootfs1.gz",
+			slitazURL,
+		},
+		"slitaz-base": &Distro{
+			"boot/bzImage64",
+			"boot/rootfs5.gz,boot/rootfs1.gz",
+			"autologin initrd=/boot/rootfs5.gz initrd=/boot/rootfs1.gz",
+			slitazURL,
+		},
+		"slitaz-zero": &Distro{
+			"boot/bzImage64",
+			"boot/rootfs5.gz",
+			"autologin", // initrd=/boot/rootfs5.gz",
+			slitazURL,
+		},
+		"slitaz64": &Distro{
+			"boot/bzImage64",
+			"boot/rootfs.gz",
+			"autologin",
+			slitaz64URL,
+		},
 		"arch": &Distro{
 			"arch/boot/x86_64/vmlinuz",
-			"arch/boot/x86_64/archiso.img",
+			"arch/boot/intel_ucode.img,arch/boot/x86_64/archiso.img",
 			// TODO: find an alternative for maintaining the label?
-			"memmap=768M!768M earlyprintk=ttyS0,115200 console=ttyS0 console=tty0 loglevel=3 archisobasedir=arch archisolabel=ARCH_202005",
+			"earlyprintk=ttyS0,115200 console=tty0 loglevel=3 archisobasedir=arch archisolabel=ARCH_202005",
 			archURL,
 		},
-		"Arch": &Distro{
-			"/bzImage", // our own custom kernel, which has to be in the initramfs
-			"arch/boot/x86_64/archiso.img",
-			"memmap=768M!768M earlyprintk=ttyS0,115200 console=ttyS0 console=tty0 loglevel=3 archisobasedir=arch archisolabel=ARCH_202005",
-			archURL,
+		"sysresccd": &Distro{
+			"sysresccd/boot/x86_64/vmlinuz",
+			"sysresccd/boot/intel_ucode.img,sysresccd/boot/x86_64/sysresccd.img",
+			"earlyprintk=ttyS0,115200 console=tty0 loglevel=3 archisobasedir=sysresccd archisolabel=SYSRESCCD_WEBBOOT",
+			srcdURL,
+		},
+		"manjaro": &Distro{
+			"boot/vmlinuz-x86_64",
+			"boot/initramfs-x86_64.img",
+			"earlyprintk=ttyS0,115200 console=tty0 loglevel=3 misobasedir=manjaro misolabel=MANJARO_WEBBOOT",
+			manjURL,
 		},
 		"fedora": &Distro{
 			"isolinux/vmlinuz",
@@ -118,16 +158,16 @@ var (
 			"root=live:CDLABEL=openSUSE_Leap_15.2_KDE_Live rd.live.image rd.live.overlay.persistent rd.live.overlay.cowfs=ext4",
 			oSUSEURL,
 		},
+		"debian": &Distro{
+			"live/vmlinuz-4.19.0-9-amd64",
+			"live/initrd.img-4.19.0-9-amd64",
+			"boot=live components", // splash quiet",
+			debURL,
+		},
 		"ubuntu": &Distro{
 			"casper/vmlinuz",
 			"casper/initrd",
-			"memmap=1G!1G earlyprintk=ttyS0,115200 console=ttyS0 console=tty0 root=/dev/pmem0 loglevel=3 boot=casper file=/cdrom/preseed/ubuntu.seed",
-			ubuURL,
-		},
-		"Ubuntu": &Distro{
-			"/bzImage", // our own custom kernel, which has to be in the initramfs
-			"casper/initrd",
-			"memmap=1G!1G earlyprintk=ttyS0,115200 console=ttyS0 console=tty0 root=/dev/pmem0 loglevel=3 boot=casper file=/cdrom/preseed/ubuntu.seed",
+			"earlyprintk=ttyS0,115200 console=tty0 root=/dev/pmem0 loglevel=3 boot=casper file=/cdrom/preseed/ubuntu.seed",
 			ubuURL,
 		},
 		"local": &Distro{
@@ -261,11 +301,23 @@ func main() {
 
 	}
 	if *dryrun == false {
-		k, i := wbpath(tmp, b.Kernel), wbpath(tmp, b.Initrd)
+		k := wbpath(tmp, b.Kernel)
+		initrds := strings.Split(b.Initrd, ",")
+		var initrdReaders []io.ReaderAt
+		for _, relPath := range initrds {
+			file, err := os.Open(wbpath(tmp, relPath))
+			if err != nil {
+				log.Fatal(err)
+			}
+			initrdReaders = append(initrdReaders, file)
+		}
+		// initrd := PadInitrds(initrdReaders)
+		initrd := boot.CatInitrds(initrdReaders...)
+
 		cmdline := strings.TrimSuffix(string(cl), "\n") + " " + b.Cmdline
 		image := &boot.LinuxImage{
 			Kernel:  uio.NewLazyFile(k),
-			Initrd:  uio.NewLazyFile(i),
+			Initrd:  initrd,
 			Cmdline: cmdline,
 		}
 		if err := image.Load(true); err != nil {
