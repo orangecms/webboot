@@ -339,14 +339,16 @@ func BootCachedISO(osImage boot.OSImage, kernelParams string) error {
 
 	// We prefer to use the kexec command for now, if possible, as it can
 	// use the 32-bit entry point.
-	if _, err := os.Stat("/sbin/kexec"); err != nil {
-		if err := cmdKexecLoad(linuxImage, true); err != nil {
-			return err
+	/*
+		if _, err := os.Stat("/sbin/kexec"); err != nil {
+			if err := cmdKexecLoad(linuxImage, true); err != nil {
+				return err
+			}
+			if err := cmdKexecReboot(true); err != nil {
+				return err
+			}
 		}
-		if err := cmdKexecReboot(true); err != nil {
-			return err
-		}
-	}
+	*/
 	if err := linuxImage.Load(true); err != nil {
 		return err
 	}
